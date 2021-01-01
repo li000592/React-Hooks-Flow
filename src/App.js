@@ -1,50 +1,99 @@
-// Lifting state
+// Hook flow
+// https://github.com/donavon/hook-flow
+
+// PLEASE NOTE: there was a subtle change in the order of cleanup functions
+// getting called in React 17:
+// https://github.com/kentcdodds/react-hooks/issues/90
 
 import * as React from "react"
 
-function Name({ name, onNameChange }) {
-  return (
-    <div>
-      <label htmlFor="name">Name: </label>
-      <input id="name" value={name} onChange={onNameChange} />
-    </div>
-  )
-}
+function Child() {
+  console.log("%c    Child: render start", "color: MediumSpringGreen")
 
-// 🐨 accept `animal` and `onAnimalChange` props to this component
-function FavoriteAnimal() {
-  // 💣 delete this, it's now managed by the App
-  const [animal, setAnimal] = React.useState("")
-  return (
-    <div>
-      <label htmlFor="animal">Favorite Animal: </label>
-      <input id="animal" value={animal} onChange={(event) => setAnimal(event.target.value)} />
-    </div>
-  )
-}
+  const [count, setCount] = React.useState(() => {
+    console.log("%c    Child: useState(() => 0)", "color: tomato")
+    return 0
+  })
 
-// 🐨 uncomment this
-// function Display({name, animal}) {
-//   return <div>{`Hey ${name}, your favorite animal is: ${animal}!`}</div>
-// }
+  React.useEffect(() => {
+    console.log("%c    Child: useEffect(() => {})", "color: LightCoral")
+    return () => {
+      console.log("%c    Child: useEffect(() => {}) cleanup 🧹", "color: LightCoral")
+    }
+  })
 
-// 💣 remove this component in favor of the new one
-function Display({ name }) {
-  return <div>{`Hey ${name}, you are great!`}</div>
+  React.useEffect(() => {
+    console.log("%c    Child: useEffect(() => {}, [])", "color: MediumTurquoise")
+    return () => {
+      console.log("%c    Child: useEffect(() => {}, []) cleanup 🧹", "color: MediumTurquoise")
+    }
+  }, [])
+
+  React.useEffect(() => {
+    console.log("%c    Child: useEffect(() => {}, [count])", "color: HotPink")
+    return () => {
+      console.log("%c    Child: useEffect(() => {}, [count]) cleanup 🧹", "color: HotPink")
+    }
+  }, [count])
+
+  const element = <button onClick={() => setCount((previousCount) => previousCount + 1)}>{count}</button>
+
+  console.log("%c    Child: render end", "color: MediumSpringGreen")
+
+  return element
 }
 
 function App() {
-  // 🐨 add a useState for the animal
-  const [name, setName] = React.useState("")
-  return (
-    <form>
-      <Name name={name} onNameChange={(event) => setName(event.target.value)} />
-      {/* 🐨 pass the animal and onAnimalChange prop here (similar to the Name component above) */}
-      <FavoriteAnimal />
-      {/* 🐨 pass the animal prop here */}
-      <Display name={name} />
-    </form>
+  console.log("%cApp: render start", "color: MediumSpringGreen")
+
+  const [showChild, setShowChild] = React.useState(() => {
+    console.log("%cApp: useState(() => false)", "color: tomato")
+    return false
+  })
+
+  React.useEffect(() => {
+    console.log("%cApp: useEffect(() => {})", "color: LightCoral")
+    return () => {
+      console.log("%cApp: useEffect(() => {}) cleanup 🧹", "color: LightCoral")
+    }
+  })
+
+  React.useEffect(() => {
+    console.log("%cApp: useEffect(() => {}, [])", "color: MediumTurquoise")
+    return () => {
+      console.log("%cApp: useEffect(() => {}, []) cleanup 🧹", "color: MediumTurquoise")
+    }
+  }, [])
+
+  React.useEffect(() => {
+    console.log("%cApp: useEffect(() => {}, [showChild])", "color: HotPink")
+    return () => {
+      console.log("%cApp: useEffect(() => {}, [showChild]) cleanup 🧹", "color: HotPink")
+    }
+  }, [showChild])
+
+  const element = (
+    <>
+      <label>
+        <input type="checkbox" checked={showChild} onChange={(e) => setShowChild(e.target.checked)} /> show child
+      </label>
+      <div
+        style={{
+          padding: 10,
+          margin: 10,
+          height: 50,
+          width: 50,
+          border: "solid",
+        }}
+      >
+        {showChild ? <Child /> : null}
+      </div>
+    </>
   )
+
+  console.log("%cApp: render end", "color: MediumSpringGreen")
+
+  return element
 }
 
 export default App
